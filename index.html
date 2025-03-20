@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji con Gravedad y Paredes</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Contenedor con paredes */
+        #gameContainer {
+            position: relative;
+            width: 90vw;
+            height: 80vh;
+            background-color: white;
+            border: 5px solid black;
+            overflow: hidden;
+        }
+
+        /* Botones de emojis */
+        #buttons {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 5px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Emojis */
+        .emoji {
+            position: absolute;
+            font-size: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Botones de selección -->
+<div id="buttons">
+    <button onclick="addEmoji('😀')">😀</button>
+    <button onclick="addEmoji('🎉')">🎉</button>
+    <button onclick="addEmoji('❤️')">❤️</button>
+    <button onclick="addEmoji('😎')">😎</button>
+    <button onclick="addEmoji('🐱')">🐱</button>
+    <button onclick="addEmoji('🍕')">🍕</button>
+    <button onclick="addEmoji('🔥')">🔥</button>
+    <button onclick="addEmoji('🚀')">🚀</button>
+</div>
+
+<!-- Área del juego con paredes -->
+<div id="gameContainer"></div>
+
+<script>
+    let emojis = [];
+    let gravity = 0.3;  // Gravedad aplicada
+    let bounceFactor = 0.6;  // Rebote al tocar el suelo
+    let friction = 0.98;  // Fricción horizontal
+
+    const gameContainer = document.getElementById("gameContainer");
+
+    function addEmoji(emoji) {
+        const newEmoji = document.createElement('div');
+        newEmoji.classList.add('emoji');
+        newEmoji.textContent = emoji;
+        
+        // Posicionamiento inicial
+        newEmoji.style.left = `${Math.random() * (gameContainer.clientWidth - 40)}px`;
+        newEmoji.style.top = '0px';
+        
+        gameContainer.appendChild(newEmoji);
+        
+        // Agregar a la lista de emojis con propiedades físicas
+        emojis.push({
+            element: newEmoji,
+            x: parseFloat(newEmoji.style.left),
+            y: 0,
+            velocityX: 0,
+            velocityY: 0
+        });
+    }
+
+    function applyPhysics() {
+        emojis.forEach(emoji => {
+            // Aplicar gravedad
+            emoji.velocityY += gravity;
+            emoji.y += emoji.velocityY;
+            emoji.x += emoji.velocityX;
+
+            const emojiRect = emoji.element.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            // Rebote en el suelo
+            if (emoji.y + emojiRect.height > containerRect.height) {
+                emoji.y = containerRect.height - emojiRect.height;
+                emoji.velocityY *= -bounceFactor;
+            }
+
+            // Rebote en las paredes izquierda y derecha
+            if (emoji.x < 0) {
+                emoji.x = 0;
+                emoji.velocityX *= -bounceFactor;
+            }
+            if (emoji.x + emojiRect.width > containerRect.width) {
+                emoji.x = containerRect.width - emojiRect.width;
+                emoji.velocityX *= -bounceFactor;
+            }
+
+            // Aplicar fricción para evitar que los emojis sigan moviéndose indefinidamente
+            emoji.velocityX *= friction;
+
+            // Actualizar posición
+            emoji.element.style.top = `${emoji.y}px`;
+            emoji.element.style.left = `${emoji.x}px`;
+        });
+    }
+
+    window.addEventListener('deviceorientation', (event) => {
+        let tiltX = event.gamma / 10; // Inclinación lateral
+        let tiltY = event.beta / 10;  // Inclinación hacia adelante/atrás
+
+        emojis.forEach(emoji => {
+            emoji.velocityX += tiltX;
+            emoji.velocityY += tiltY / 2;
+        });
+    });
+
+    setInterval(applyPhysics, 16);  // Aplicar físicas cada 16ms (~60 FPS)
+</script>
+
+</body>
+</html>
